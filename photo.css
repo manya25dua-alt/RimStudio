@@ -1,0 +1,26 @@
+/* Brick wall studio background */
+.stage {
+  background: #06080a;
+}
+.bgimg {
+  background: url("images/bg.jpg") center bottom / cover no-repeat;
+  filter: brightness(.95) contrast(1.05);
+}
+/* Darken the top and edges so the cars stay the focus */
+.vig {
+  background:
+    radial-gradient(ellipse at 50% 60%, transparent 50%, #030405b8),
+    linear-gradient(#0306088a, transparent 28%);
+}
+/* Photo cars: soft drop so they sit on the wooden floor */
+#photo {
+  filter: drop-shadow(0 6px 10px #000a);
+}
+
+/* Real car photos in the model strip */
+.cc img {
+  width: 100%;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}

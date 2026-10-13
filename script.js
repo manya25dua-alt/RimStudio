@@ -21,10 +21,19 @@ const DES = {
   aero: ['Aero', 'Luxury']
 };
 
-// Car data
+/*
+  Car data.
+  p = real photo settings (side-profile photo with transparent background):
+    src : path to the photo
+    w   : [x1, x2]  horizontal centre of the REAR and FRONT wheel, as a fraction of image width (0..1)
+    y   : vertical centre of the wheels, as a fraction of image height (0..1)
+    r   : tyre radius as a fraction of image width
+  b / g are the old drawn shapes, used only if the photo file is missing.
+*/
 const CARS = [
   {
     n: 'BMW M4',
+    p: { src: 'cars/bmw-m4.png', w: [0.22, 0.78], y: 0.70, r: 0.10 },
     c: ['#3a78ff', '#0b2a7a'],
     b: 'M70 262C68 240 84 228 130 222L250 208C285 176 335 152 410 148L500 150C560 154 615 188 655 204L720 214C748 220 756 240 752 262Z',
     g: 'M285 204C312 178 350 162 410 160L495 162C535 166 575 186 610 204Z',
@@ -33,6 +42,7 @@ const CARS = [
   },
   {
     n: 'Mercedes-Benz S-Class',
+    p: { src: 'cars/mercedes-s-class.png', w: [0.21, 0.79], y: 0.72, r: 0.10 },
     c: ['#c4ccd6', '#4b535d'],
     b: 'M50 262C48 238 64 226 100 222L220 214C250 186 300 168 380 164L520 164C575 168 620 190 668 208L728 218C756 224 762 242 758 262Z',
     g: 'M255 212C285 190 320 178 380 176L525 176C565 180 600 196 636 210Z',
@@ -41,6 +51,7 @@ const CARS = [
   },
   {
     n: 'Porsche 911',
+    p: { src: 'cars/porsche-911.png', w: [0.22, 0.77], y: 0.70, r: 0.10 },
     c: ['#e0343a', '#6a0b12'],
     b: 'M85 262C80 238 96 226 140 220L230 206C270 170 330 150 400 150C470 150 540 168 590 198L690 212C735 218 748 238 744 262Z',
     g: 'M265 204C300 176 345 162 400 162C455 162 510 176 560 200Z',
@@ -49,6 +60,7 @@ const CARS = [
   },
   {
     n: 'Audi RS7',
+    p: { src: 'cars/audi-rs7.png', w: [0.21, 0.79], y: 0.71, r: 0.10 },
     c: ['#9aa1aa', '#2f3338'],
     b: 'M60 262C58 238 76 226 115 222L240 210C290 174 350 156 430 154C510 154 575 176 640 204L722 214C752 220 758 240 754 262Z',
     g: 'M275 208C320 180 370 168 430 167C500 167 560 186 612 206Z',
@@ -57,6 +69,7 @@ const CARS = [
   },
   {
     n: 'Ford Mustang GT',
+    p: { src: 'cars/ford-mustang-gt.png', w: [0.22, 0.78], y: 0.70, r: 0.10 },
     c: ['#ff8a2a', '#8a3500'],
     b: 'M70 262C66 236 84 224 120 220L225 212C255 178 300 160 360 158L450 160C510 166 560 192 600 208L728 216C752 222 758 242 754 262Z',
     g: 'M262 210C288 184 322 172 362 171L445 173C490 178 530 194 560 208Z',
@@ -64,6 +77,14 @@ const CARS = [
     def: { d: 'five', f: 0, s: 19 }
   }
 ];
+
+// Preload car photos; any that fail fall back to the drawn car
+const loadCar = c => new Promise(res => {
+  const im = new Image();
+  im.onload = () => { c.ok = true; c.nw = im.naturalWidth; c.nh = im.naturalHeight; res(); };
+  im.onerror = () => { c.ok = false; res(); };
+  im.src = c.p.src;
+});
 
 // Helper to create polygons
 const sp = (a, r0, r1, w0, w1) => {
@@ -82,9 +103,7 @@ const SP = {
   split: R => N(5, i => sp(i * 1.2566 - 0.1, R * 0.2, R * 0.93, R * 0.04, R * 0.05) + sp(i * 1.2566 + 0.1, R * 0.2, R * 0.93, R * 0.04, R * 0.05)),
   mesh: R => `
     <g fill="none" stroke="inherit" stroke-width="${R * 0.05}">
-      ${[0.35, 0.55, 0.75, 0.9]
-        .map(k => `<circle r="${R * k}"/>`)
-        .join('')}
+      ${[0.35, 0.55, 0.75, 0.9].map(k => `<circle r="${R * k}"/>`).join('')}
       ${N(16, i => {
         const a = i * Math.PI / 8;
         return `<path d="M0 0L${Math.cos(a) * R * 0.93} ${Math.sin(a) * R * 0.93}"/>`;
@@ -177,30 +196,58 @@ function renderW(kick = true) {
   }
 }
 
+// Show the selected car: real photo if available, drawn car otherwise.
+// Wheels always sit at SVG x=215 and x=595, y=270; the photo is scaled and
+// shifted so its wheel centres land exactly there.
 function paint() {
   const c = CARS[S.car];
-  ['#body', '#bcp'].forEach(s => $(s).setAttribute('d', c.b));
-  $('#glass').setAttribute('d', c.g);
-  $('#gh').setAttribute('d', c.g);
-  $('#p0').setAttribute('stop-color', c.c[0]);
-  $('#p1').setAttribute('stop-color', c.c[1]);
+  const ph = $('#photo');
+  let k = 1;
+
+  if (c.ok) {
+    const [fx1, fx2] = c.p.w;
+    const iw = (595 - 215) / (fx2 - fx1);
+    const ih = iw * c.nh / c.nw;
+    ph.setAttribute('href', c.p.src);
+    ph.setAttribute('x', (215 - fx1 * iw).toFixed(1));
+    ph.setAttribute('y', (270 - c.p.y * ih).toFixed(1));
+    ph.setAttribute('width', iw.toFixed(1));
+    ph.setAttribute('height', ih.toFixed(1));
+    ph.setAttribute('display', 'inline');
+    $('#vec').style.display = 'none';
+    k = (c.p.r * iw) / 58;
+  } else {
+    ph.setAttribute('display', 'none');
+    $('#vec').style.display = '';
+    ['#body', '#bcp'].forEach(s => $(s).setAttribute('d', c.b));
+    $('#glass').setAttribute('d', c.g);
+    $('#gh').setAttribute('d', c.g);
+    $('#p0').setAttribute('stop-color', c.c[0]);
+    $('#p1').setAttribute('stop-color', c.c[1]);
+  }
+
+  wl.forEach((w, i) => w.setAttribute('transform', `translate(${i ? 595 : 215} 270) scale(${k.toFixed(3)})`));
   $('#cn').innerHTML = `<span>${c.n.toUpperCase()}</span>`;
 }
 
 // UI generation
-$('#strip').innerHTML = CARS.map((c, i) => `
-  <button class="cc" data-i="${i}" aria-label="${c.n}">
-    <svg viewBox="40 140 730 190">
-      <path d="${c.b}" fill="${c.c[0]}"/>
-      <path d="${c.g}" fill="#0b1118"/>
-      <circle cx="215" cy="270" r="50" fill="#0a0b0d"/>
-      <circle cx="595" cy="270" r="50" fill="#0a0b0d"/>
-      <circle cx="215" cy="270" r="30" fill="#aab"/>
-      <circle cx="595" cy="270" r="30" fill="#aab"/>
-    </svg>
-    <span>${c.n.replace('Mercedes-Benz ', 'Mercedes ')}</span>
-  </button>
-`).join('');
+function buildStrip() {
+  $('#strip').innerHTML = CARS.map((c, i) => `
+    <button class="cc" data-i="${i}" aria-label="${c.n}">
+      ${c.ok
+        ? `<img src="${c.p.src}" alt="">`
+        : `<svg viewBox="40 140 730 190">
+            <path d="${c.b}" fill="${c.c[0]}"/>
+            <path d="${c.g}" fill="#0b1118"/>
+            <circle cx="215" cy="270" r="50" fill="#0a0b0d"/>
+            <circle cx="595" cy="270" r="50" fill="#0a0b0d"/>
+            <circle cx="215" cy="270" r="30" fill="#aab"/>
+            <circle cx="595" cy="270" r="30" fill="#aab"/>
+          </svg>`}
+      <span>${c.n.replace('Mercedes-Benz ', 'Mercedes ')}</span>
+    </button>
+  `).join('');
+}
 
 $('#sw').innerHTML = FIN.map((f, i) => `
   <button data-f="${i}" aria-label="${f.n}" title="${f.n}" style="background:radial-gradient(circle at 35% 30%,${f.c[0]},${f.c[1]} 55%,${f.c[2]})"></button>
@@ -392,6 +439,7 @@ const go = (a, b, d, e, cb) => {
 };
 const sv = $('#sv'),
   cg = $('#carG'),
+  cb = $('#carBody'),
   cam = $('#cam'),
   shn = $('#shn'),
   bm = $('#bm'),
@@ -421,7 +469,9 @@ function loop(t) {
     r.setAttribute('r', (62 + rip * 40).toFixed(1));
     r.setAttribute('opacity', ((1 - rip) * 0.9).toFixed(2));
   });
-  cg.setAttribute('transform', `translate(${carX.toFixed(1)} 0)`);
+  const tr = `translate(${carX.toFixed(1)} 0)`;
+  cg.setAttribute('transform', tr);
+  cb.setAttribute('transform', tr);
   const bl = Math.min(8, Math.abs(carX) / 110);
   if (Math.abs(bl - lastB) > 0.05) {
     sv.style.filter = bl > 0.1 ? `blur(${bl.toFixed(1)}px)` : '';
@@ -469,15 +519,19 @@ function dust(t) {
   requestAnimationFrame(dust);
 }
 
-paint();
-grid();
-renderW(false);
-carX = -950;
-prevX = -950;
-if (!RM) requestAnimationFrame(dust);
-requestAnimationFrame(loop);
-setTimeout(() => {
-  $('#intro').classList.add('out');
-  renderW(true);
-  go(-950, 0, RM ? 1 : 1900, p => 1 - Math.pow(1 - p, 4), null);
-}, RM ? 0 : 1700);
+// Start once the car photos have loaded (or failed and fallen back)
+Promise.all(CARS.map(loadCar)).then(() => {
+  buildStrip();
+  paint();
+  grid();
+  renderW(false);
+  carX = -950;
+  prevX = -950;
+  if (!RM) requestAnimationFrame(dust);
+  requestAnimationFrame(loop);
+  setTimeout(() => {
+    $('#intro').classList.add('out');
+    renderW(true);
+    go(-950, 0, RM ? 1 : 1900, p => 1 - Math.pow(1 - p, 4), null);
+  }, RM ? 0 : 1700);
+});
