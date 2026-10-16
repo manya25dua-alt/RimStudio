@@ -24,16 +24,16 @@ const DES = {
 /*
   Car data.
   p = real photo settings (side-profile photo with transparent background):
-    src : path to the photo
-    w   : [x1, x2]  horizontal centre of the REAR and FRONT wheel, as a fraction of image width (0..1)
-    y   : vertical centre of the wheels, as a fraction of image height (0..1)
-    r   : tyre radius as a fraction of image width
+    src : path to the cut-out PNG (car only, transparent background)
+    W   : width of the car in SVG units (the car is centred and sits on the floor)
+    wh  : [left wheel, right wheel], each [cx, cy, rx, ry] as fractions of the image WIDTH
+          (rx/ry differ on 3/4-view photos, where wheels look like ellipses)
   b / g are the old drawn shapes, used only if the photo file is missing.
 */
 const CARS = [
   {
     n: 'BMW M4',
-    p: { src: 'cars/bmw-m4.png', w: [0.22, 0.78], y: 0.70, r: 0.10 },
+    p: { src: 'cars/bmw-m4.png', W: 490, wh: [[0.4448, 0.3375, 0.082, 0.0978], [0.9054, 0.2256, 0.0521, 0.0741]] },
     c: ['#3a78ff', '#0b2a7a'],
     b: 'M70 262C68 240 84 228 130 222L250 208C285 176 335 152 410 148L500 150C560 154 615 188 655 204L720 214C748 220 756 240 752 262Z',
     g: 'M285 204C312 178 350 162 410 160L495 162C535 166 575 186 610 204Z',
@@ -42,7 +42,7 @@ const CARS = [
   },
   {
     n: 'Mercedes-Benz S-Class',
-    p: { src: 'cars/mercedes-s-class.png', w: [0.21, 0.79], y: 0.72, r: 0.10 },
+    p: { src: 'cars/mercedes-s-class.png', W: 545, wh: [[0.5828, 0.2766, 0.0621, 0.0976], [0.9142, 0.25, 0.0399, 0.0858]] },
     c: ['#c4ccd6', '#4b535d'],
     b: 'M50 262C48 238 64 226 100 222L220 214C250 186 300 168 380 164L520 164C575 168 620 190 668 208L728 218C756 224 762 242 758 262Z',
     g: 'M255 212C285 190 320 178 380 176L525 176C565 180 600 196 636 210Z',
@@ -51,7 +51,7 @@ const CARS = [
   },
   {
     n: 'Porsche 911',
-    p: { src: 'cars/porsche-911.png', w: [0.22, 0.77], y: 0.70, r: 0.10 },
+    p: { src: 'cars/porsche-911.png', W: 640, wh: [[0.2139, 0.2251, 0.0769, 0.0769], [0.758, 0.2251, 0.0807, 0.0807]] },
     c: ['#e0343a', '#6a0b12'],
     b: 'M85 262C80 238 96 226 140 220L230 206C270 170 330 150 400 150C470 150 540 168 590 198L690 212C735 218 748 238 744 262Z',
     g: 'M265 204C300 176 345 162 400 162C455 162 510 176 560 200Z',
@@ -60,7 +60,7 @@ const CARS = [
   },
   {
     n: 'Audi RS7',
-    p: { src: 'cars/audi-rs7.png', w: [0.21, 0.79], y: 0.71, r: 0.10 },
+    p: { src: 'cars/audi-rs7.png', W: 570, wh: [[0.5235, 0.2683, 0.0806, 0.1026], [0.9252, 0.2434, 0.0557, 0.0894]] },
     c: ['#9aa1aa', '#2f3338'],
     b: 'M60 262C58 238 76 226 115 222L240 210C290 174 350 156 430 154C510 154 575 176 640 204L722 214C752 220 758 240 754 262Z',
     g: 'M275 208C320 180 370 168 430 167C500 167 560 186 612 206Z',
@@ -69,7 +69,7 @@ const CARS = [
   },
   {
     n: 'Ford Mustang GT',
-    p: { src: 'cars/ford-mustang-gt.png', w: [0.22, 0.78], y: 0.70, r: 0.10 },
+    p: { src: 'cars/ford-mustang-gt.png', W: 680, wh: [[0.1786, 0.2183, 0.0709, 0.0709], [0.7694, 0.2212, 0.0728, 0.0728]] },
     c: ['#ff8a2a', '#8a3500'],
     b: 'M70 262C66 236 84 224 120 220L225 212C255 178 300 160 360 158L450 160C510 166 560 192 600 208L728 216C752 222 758 242 754 262Z',
     g: 'M262 210C288 184 322 172 362 171L445 173C490 178 530 194 560 208Z',
@@ -204,18 +204,26 @@ function paint() {
   const ph = $('#photo');
   let k = 1;
 
+  let sq = null;
   if (c.ok) {
-    const [fx1, fx2] = c.p.w;
-    const iw = (595 - 215) / (fx2 - fx1);
+    // Place the cut-out: centred, wheels resting on the floor line (y = 328)
+    const iw = c.p.W;
     const ih = iw * c.nh / c.nw;
+    const bottom = Math.max(...c.p.wh.map(w => (w[1] + w[3]) * iw));
     ph.setAttribute('href', c.p.src);
-    ph.setAttribute('x', (215 - fx1 * iw).toFixed(1));
-    ph.setAttribute('y', (270 - c.p.y * ih).toFixed(1));
+    ph.setAttribute('x', (400 - iw / 2).toFixed(1));
+    ph.setAttribute('y', (328 - bottom).toFixed(1));
     ph.setAttribute('width', iw.toFixed(1));
     ph.setAttribute('height', ih.toFixed(1));
     ph.setAttribute('display', 'inline');
     $('#vec').style.display = 'none';
-    k = (c.p.r * iw) / 58;
+    // Wheel overlay: position + (elliptical) scale for each wheel
+    sq = c.p.wh.map(w => ({
+      x: 400 - iw / 2 + w[0] * iw,
+      y: 328 - bottom + w[1] * iw,
+      sx: (w[2] * iw) / 58,
+      sy: (w[3] * iw) / 58
+    }));
   } else {
     ph.setAttribute('display', 'none');
     $('#vec').style.display = '';
@@ -226,7 +234,10 @@ function paint() {
     $('#p1').setAttribute('stop-color', c.c[1]);
   }
 
-  wl.forEach((w, i) => w.setAttribute('transform', `translate(${i ? 595 : 215} 270) scale(${k.toFixed(3)})`));
+  wl.forEach((w, i) => {
+    if (sq) w.setAttribute('transform', `translate(${sq[i].x.toFixed(1)} ${sq[i].y.toFixed(1)}) scale(${sq[i].sx.toFixed(3)} ${sq[i].sy.toFixed(3)})`);
+    else w.setAttribute('transform', `translate(${i ? 595 : 215} 270) scale(${k.toFixed(3)})`);
+  });
   $('#cn').innerHTML = `<span>${c.n.toUpperCase()}</span>`;
 }
 
@@ -534,4 +545,76 @@ Promise.all(CARS.map(loadCar)).then(() => {
     renderW(true);
     go(-950, 0, RM ? 1 : 1900, p => 1 - Math.pow(1 - p, 4), null);
   }, RM ? 0 : 1700);
+});
+
+/* ===== Per-car scenes, drive-in, drag-to-rotate, interior ===== */
+// Optional per car: p.frames = ['cars/360/bmw-m4/00.png', ...] (turntable cut-outs, 0 = the default view)
+const SCENES = ['loft', 'hangar', 'showroom', 'studio', 'runway'];   // same order as CARS
+CARS.forEach(c => (c.p.interior = c.p.src.replace('cars/', 'cars/interior/').replace('.png', '.jpg')));
+const stg = $('#stage'), svEl = $('#sv'), inter = $('#inter'), ibtn = $('#in');
+const layers = [$('#bm'), $('#bm2')];
+let lastCar = -1, topL = 0, yaw = 0, drag = null, anim = 0;
+
+function scene(i) {
+  topL ^= 1;
+  layers[topL].className = 'layer bgimg sc-' + SCENES[i];
+  layers[topL].style.opacity = 1;
+  layers[topL ^ 1].style.opacity = 0;
+}
+
+function drive(first) {
+  cancelAnimationFrame(anim);
+  const g = $('#carBody'), sh = $('#carG'), rots = [...document.querySelectorAll('#wl .rot')];
+  const t0 = performance.now() + (first ? 1900 : 0), D = 1500;
+  const bk = t => { const c = 1.5, u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; };   // ease-out-back (small bounce)
+  const step = now => {
+    const t = Math.min(Math.max((now - t0) / D, 0), 1), s = 0.22 + 0.78 * bk(t);
+    g.setAttribute('transform', `translate(400 328) scale(${s.toFixed(4)}) translate(-400 -328)`);
+    g.style.opacity = Math.min(1, t * 3);
+    sh.style.opacity = t;
+    rots.forEach(r => { r.style.transformBox = 'fill-box'; r.style.transformOrigin = 'center'; r.style.transform = `rotate(${(-(1 - t) * (1 - t) * 1440).toFixed(1)}deg)`; });
+    if (t < 1) anim = requestAnimationFrame(step);
+    else { g.removeAttribute('transform'); rots.forEach(r => (r.style.transform = '')); if (first) toast('Drag to rotate the car'); }
+  };
+  g.style.opacity = 0;
+  anim = requestAnimationFrame(step);
+}
+
+function applyYaw(release) {
+  const c = CARS[S.car], fr = c.p.frames;
+  svEl.style.transition = release ? 'transform .7s cubic-bezier(.2,.8,.2,1)' : 'none';
+  if (fr && fr.length) {                       // real turntable: scrub through the frames
+    const i = ((Math.round(yaw / 360 * fr.length) % fr.length) + fr.length) % fr.length;
+    $('#photo').setAttribute('href', i ? fr[i] : c.p.src);
+    $('#wl').style.display = i ? 'none' : '';  // wheel overlay only matches the base view
+  } else {                                     // single photo: gentle 3D look-around
+    svEl.style.transform = `perspective(1400px) rotateY(${release ? 0 : Math.max(-32, Math.min(32, yaw))}deg)`;
+  }
+}
+
+const _paint = paint;
+paint = function () {
+  _paint();
+  if (S.car !== lastCar) { const first = lastCar < 0; lastCar = S.car; yaw = 0; applyYaw(true); scene(S.car); drive(first); closeInterior(); }
+};
+
+stg.addEventListener('pointerdown', e => {
+  if (stg.classList.contains('int') || e.target.closest('button,.strip,.card,.bar')) return;
+  drag = { x: e.clientX, y0: yaw }; stg.setPointerCapture(e.pointerId);
+});
+stg.addEventListener('pointermove', e => { if (drag) { yaw = drag.y0 + (e.clientX - drag.x) * 0.6; applyYaw(false); } });
+['pointerup', 'pointercancel'].forEach(ev => stg.addEventListener(ev, () => {
+  if (!drag) return; drag = null;
+  if (!(CARS[S.car].p.frames || []).length) { yaw = 0; applyYaw(true); }
+}));
+
+function closeInterior() { stg.classList.remove('int'); ibtn.classList.remove('on'); }
+ibtn.addEventListener('click', () => {
+  if (stg.classList.contains('int')) return closeInterior();
+  const c = CARS[S.car], im = new Image();
+  inter.dataset.msg = 'Add the interior photo: ' + c.p.interior;
+  im.onload = () => { $('#ii').style.backgroundImage = `url(${im.src})`; inter.classList.remove('miss'); };
+  im.onerror = () => { $('#ii').style.backgroundImage = 'none'; inter.classList.add('miss'); };
+  im.src = c.p.interior;
+  stg.classList.add('int'); ibtn.classList.add('on');
 });
