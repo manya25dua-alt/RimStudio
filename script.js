@@ -197,8 +197,10 @@ function renderW(kick = true) {
 }
 
 // Show the selected car: real photo if available, drawn car otherwise.
-// Wheels always sit at SVG x=215 and x=595, y=270; the photo is scaled and
-// shifted so its wheel centres land exactly there.
+// The photo fills the full SVG viewport (800 × 430). The car is scaled so
+// its width fills 800 SVG units, then centred vertically so its floor (bottom
+// of the lower wheel) sits on the floor line at y = 358.
+// Wheel overlays are positioned precisely using the wh fractions.
 function paint() {
   const c = CARS[S.car];
   const ph = $('#photo');
@@ -206,21 +208,27 @@ function paint() {
 
   let sq = null;
   if (c.ok) {
-    // Place the cut-out: centred, wheels resting on the floor line (y = 328)
-    const iw = c.p.W;
-    const ih = iw * c.nh / c.nw;
+    // Scale the image so it fills 800px wide (the full SVG width)
+    const iw = 800;                          // rendered width = SVG width
+    const ih = iw * c.nh / c.nw;            // rendered height, preserving aspect
+    // bottom edge of the lowest wheel in rendered coords
     const bottom = Math.max(...c.p.wh.map(w => (w[1] + w[3]) * iw));
+    // Place car so its wheel base lands on y = 358 (floor line in new viewBox)
+    const xOffset = 0;
+    const yOffset = (358 - bottom);
+
     ph.setAttribute('href', c.p.src);
-    ph.setAttribute('x', (400 - iw / 2).toFixed(1));
-    ph.setAttribute('y', (328 - bottom).toFixed(1));
+    ph.setAttribute('x', xOffset.toFixed(1));
+    ph.setAttribute('y', yOffset.toFixed(1));
     ph.setAttribute('width', iw.toFixed(1));
     ph.setAttribute('height', ih.toFixed(1));
     ph.setAttribute('display', 'inline');
     $('#vec').style.display = 'none';
-    // Wheel overlay: position + (elliptical) scale for each wheel
+
+    // Wheel overlay: position + (elliptical) scale matching the rendered photo
     sq = c.p.wh.map(w => ({
-      x: 400 - iw / 2 + w[0] * iw,
-      y: 328 - bottom + w[1] * iw,
+      x: xOffset + w[0] * iw,
+      y: yOffset + w[1] * iw,
       sx: (w[2] * iw) / 58,
       sy: (w[3] * iw) / 58
     }));
@@ -236,7 +244,7 @@ function paint() {
 
   wl.forEach((w, i) => {
     if (sq) w.setAttribute('transform', `translate(${sq[i].x.toFixed(1)} ${sq[i].y.toFixed(1)}) scale(${sq[i].sx.toFixed(3)} ${sq[i].sy.toFixed(3)})`);
-    else w.setAttribute('transform', `translate(${i ? 595 : 215} 270) scale(${k.toFixed(3)})`);
+    else w.setAttribute('transform', `translate(${i ? 595 : 215} 300) scale(${k.toFixed(3)})`);
   });
   $('#cn').innerHTML = `<span>${c.n.toUpperCase()}</span>`;
 }
@@ -569,7 +577,7 @@ function drive(first) {
   const bk = t => { const c = 1.5, u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; };   // ease-out-back (small bounce)
   const step = now => {
     const t = Math.min(Math.max((now - t0) / D, 0), 1), s = 0.22 + 0.78 * bk(t);
-    g.setAttribute('transform', `translate(400 328) scale(${s.toFixed(4)}) translate(-400 -328)`);
+    g.setAttribute('transform', `translate(400 358) scale(${s.toFixed(4)}) translate(-400 -358)`);
     g.style.opacity = Math.min(1, t * 3);
     sh.style.opacity = t;
     rots.forEach(r => { r.style.transformBox = 'fill-box'; r.style.transformOrigin = 'center'; r.style.transform = `rotate(${(-(1 - t) * (1 - t) * 1440).toFixed(1)}deg)`; });

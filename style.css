@@ -271,7 +271,7 @@ aside {
 .stage {
   position: relative;
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 38%, #232a33 0%, #0e1217 55%, #06080a 100%);
+  background: #020304;
   perspective: 1400px;
 }
 .layer {
