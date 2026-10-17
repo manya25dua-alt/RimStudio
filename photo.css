@@ -33,12 +33,12 @@
     drop-shadow(0 4px 12px #000b);
 }
 
-/* Vignette: deep edges, cinematic focus */
+/* Vignette: gentle edge darkening, car stays vivid */
 .vig {
   background:
-    radial-gradient(ellipse at 50% 50%, transparent 32%, #010203ee 80%),
-    linear-gradient(#000000bb 0%, transparent 20%),
-    linear-gradient(to top, #000000aa 0%, transparent 24%);
+    radial-gradient(ellipse at 50% 60%, transparent 55%, #00000099 100%),
+    linear-gradient(#00000055 0%, transparent 12%),
+    linear-gradient(to top, #00000066 0%, transparent 18%);
 }
 
 /* Real car photos in the model strip */
