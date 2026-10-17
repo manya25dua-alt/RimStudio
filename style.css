@@ -371,13 +371,15 @@ canvas {
   gap: 6px;
   padding: 5px;
   border-radius: 14px;
-  background: #0c0f1399;
-  backdrop-filter: blur(14px);
-  border: 1px solid #ffffff18;
+  background: #07090dcc;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid #65afff22;
   max-width: calc(100% - 20px);
   overflow: auto;
   z-index: 3;
   animation: drop 1s 1.6s cubic-bezier(.2,.8,.2,1) both;
+  box-shadow: 0 8px 32px #00000088, inset 0 1px 0 #ffffff0a;
 }
 @keyframes drop { from { opacity: 0; transform: translate(-50%,-20px); } }
 .cc {
@@ -404,11 +406,13 @@ canvas {
   width: 236px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #0d1015a8;
-  backdrop-filter: blur(16px);
-  border: 1px solid #ffffff1a;
+  background: #07090dcc;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid #65afff22;
   z-index: 3;
   animation: rise 1s 1.9s cubic-bezier(.2,.8,.2,1) both;
+  box-shadow: 0 8px 32px #00000088, inset 0 1px 0 #ffffff0a;
 }
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
 .card h4 {
@@ -445,12 +449,13 @@ canvas {
   gap: 6px;
   padding: 7px;
   border-radius: 40px;
-  background: #0d1015b3;
-  backdrop-filter: blur(16px);
-  border: 1px solid #ffffff1a;
+  background: #07090dcc;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid #65afff22;
   z-index: 3;
   animation: rise 1s 2.1s cubic-bezier(.2,.8,.2,1) both;
-  box-shadow: 0 12px 40px #0009;
+  box-shadow: 0 12px 40px #00000099, inset 0 1px 0 #ffffff0a;
 }
 .bar .ib { width: 40px; height: 40px; }
 .bar .sp { width: 1px; background: #ffffff1c; margin: 4px 3px; }
