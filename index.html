@@ -60,7 +60,7 @@
         <div class="glow" id="gl"></div>
 
         <div class="cam" id="cam">
-          <svg id="sv" viewBox="0 0 800 430" preserveAspectRatio="xMidYMid meet">
+          <svg id="sv" viewBox="0 100 800 330" preserveAspectRatio="xMidYMax meet">
             <defs id="df">
               <linearGradient id="paint" gradientUnits="userSpaceOnUse" x1="0" y1="146" x2="0" y2="272">
                 <stop id="p0" offset="0"/>
@@ -77,30 +77,29 @@
                 <stop offset="1" stop-color="#fff" stop-opacity="0"/>
               </linearGradient>
               <linearGradient id="rf" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#fff" stop-opacity=".35"/>
+                <stop offset="0" stop-color="#fff" stop-opacity=".4"/>
                 <stop offset=".7" stop-color="#fff" stop-opacity="0"/>
               </linearGradient>
             </defs>
 
-            <!-- Reflection mask at bottom of stage -->
-            <mask id="rm" maskUnits="userSpaceOnUse" x="0" y="355" width="800" height="75">
-              <rect x="0" y="355" width="800" height="75" fill="url(#rf)"/>
+            <mask id="rm" maskUnits="userSpaceOnUse" x="0" y="328" width="800" height="110">
+              <rect x="0" y="328" width="800" height="110" fill="url(#rf)"/>
             </mask>
 
             <clipPath id="bc"><path id="bcp"/></clipPath>
-            <clipPath id="ac"><rect x="0" y="0" width="800" height="320"/></clipPath>
+            <clipPath id="ac"><rect x="0" y="0" width="800" height="272"/></clipPath>
 
             <filter id="bl4"><feGaussianBlur stdDeviation="7"/></filter>
             <filter id="bl1"><feGaussianBlur stdDeviation="1.4"/></filter>
 
             <!-- Reflection on the floor -->
             <g mask="url(#rm)" filter="url(#bl1)">
-              <use href="#carG" transform="translate(0 716) scale(1 -1)"/>
+              <use href="#carG" transform="translate(0 656) scale(1 -1)"/>
             </g>
 
             <!-- Contact shadow -->
             <g id="carG">
-              <ellipse cx="400" cy="358" rx="310" ry="13" fill="#000" opacity=".85" filter="url(#bl4)"/>
+              <ellipse cx="400" cy="331" rx="310" ry="13" fill="#000" opacity=".85" filter="url(#bl4)"/>
             </g>
 
             <!-- Everything that drives in with the car -->
@@ -116,21 +115,21 @@
                 <path id="gh" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/>
                 <path d="M92 243 L735 245" stroke="#fff" stroke-opacity=".14" stroke-width="1.4"/>
                 <g clip-path="url(#ac)">
-                  <circle cx="215" cy="300" r="66" fill="#04060a"/>
-                  <circle cx="595" cy="300" r="66" fill="#04060a"/>
+                  <circle cx="215" cy="270" r="66" fill="#04060a"/>
+                  <circle cx="595" cy="270" r="66" fill="#04060a"/>
                 </g>
                 <path class="hl" d="M688 226 L742 231 L736 240 L694 237Z" fill="#fff"/>
                 <path class="hl" d="M688 226 L742 231 L736 240 L694 237Z" fill="#cfe8ff" filter="url(#bl4)"/>
                 <path d="M70 236 L96 231 L97 243 L70 247Z" fill="#ff2b3a" class="hl"/>
               </g>
 
-              <!-- Real car photo – full-bleed: covers the whole SVG viewport -->
-              <image id="photo" x="0" y="0" width="800" height="430" preserveAspectRatio="xMidYMid meet"/>
+              <!-- Real car photo (positioned by script.js) -->
+              <image id="photo" x="0" y="100" width="800" height="230" preserveAspectRatio="xMidYMid meet"/>
 
               <!-- Wheels (positioned and scaled per car in script.js) -->
               <g id="wl">
-                <g transform="translate(215 300)" class="wi"></g>
-                <g transform="translate(595 300)" class="wi"></g>
+                <g transform="translate(215 270)" class="wi"></g>
+                <g transform="translate(595 270)" class="wi"></g>
               </g>
             </g>
           </svg>
